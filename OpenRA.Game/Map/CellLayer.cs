@@ -18,13 +18,13 @@ namespace OpenRA
 	// Represents a layer of "something" that covers the map
 	public class CellLayer<T> : IEnumerable<T>
 	{
-		public readonly Size Size;
-		public readonly TileShape Shape;
+		public Size Size { get; private set; }
+		public TileShape Shape { get; private set; }
 		public event Action<CPos> CellEntryChanged = null;
 
 		readonly T[] entries;
 
-		public CellLayer(Map map)
+		public CellLayer(IMap map)
 			: this(map.TileShape, new Size(map.MapSize.X, map.MapSize.Y)) { }
 
 		public CellLayer(TileShape shape, Size size)
@@ -43,6 +43,19 @@ namespace OpenRA
 				throw new InvalidOperationException(
 					"Cannot copy values when there are listeners attached to the CellEntryChanged event.");
 			Array.Copy(anotherLayer.entries, entries, entries.Length);
+		}
+
+		public static CellLayer<T> CreateInstance(Func<MPos, T> initialCellValueFactory, Size size, TileShape tileShape)
+		{
+			var cellInfoLayer = new CellLayer<T>(tileShape, size);
+			for (var v = 0; v < size.Height; v++)
+				for (var u = 0; u < size.Width; u++)
+				{
+					var mpos = new MPos(u, v);
+					cellInfoLayer[mpos] = initialCellValueFactory(mpos);
+				}
+
+			return cellInfoLayer;
 		}
 
 		// Resolve an array index from cell coordinates

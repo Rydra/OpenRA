@@ -22,7 +22,7 @@ namespace OpenRA.Mods.Common.Activities
 		static readonly List<CPos> NoPath = new List<CPos>();
 
 		readonly Mobile mobile;
-		readonly PathFinder pathFinder;
+		readonly IPathFinder pathFinder;
 		readonly DomainIndex domainIndex;
 		readonly uint movementClass;
 
@@ -36,7 +36,7 @@ namespace OpenRA.Mods.Common.Activities
 			Target = target;
 
 			mobile = self.Trait<Mobile>();
-			pathFinder = self.World.WorldActor.Trait<PathFinder>();
+			pathFinder = self.World.WorldActor.Trait<IPathFinder>();
 			domainIndex = self.World.WorldActor.Trait<DomainIndex>();
 			movementClass = (uint)mobile.Info.GetMovementClass(self.World.TileSet);
 

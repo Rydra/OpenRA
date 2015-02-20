@@ -34,7 +34,6 @@ namespace OpenRA.Mods.Common.Traits
 		int MovementCostForCell(World world, CPos cell);
 		bool CanEnterCell(World world, Actor self, CPos cell, out int movementCost, Actor ignoreActor = null, CellConditions check = CellConditions.All);
 		bool CanEnterCell(World world, Actor self, CPos cell, Actor ignoreActor = null, CellConditions check = CellConditions.All);
-
 		int GetMovementClass(TileSet tileset);
 	}
 

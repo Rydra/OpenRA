@@ -51,31 +51,34 @@ namespace OpenRA.Mods.Common.Activities
 			var searchRadiusSquared = searchRadius * searchRadius;
 
 			// Find harvestable resources nearby:
-			var path = self.World.WorldActor.Trait<PathFinder>().FindPath(
+			var path = self.World.WorldActor.Trait<IPathFinder>().FindPath(
 				PathSearch.Search(self.World, mobileInfo, self, true)
 					.WithHeuristic(loc =>
 					{
 						// Avoid this cell:
-						if (avoidCell.HasValue && loc == avoidCell.Value) return 1;
+						if (avoidCell.HasValue && loc == avoidCell.Value)
+							return Constants.SquareDistance;
 
 						// Don't harvest out of range:
 						var distSquared = (loc - searchFromLoc).LengthSquared;
 						if (distSquared > searchRadiusSquared)
-							return int.MaxValue;
+							return Constants.SquareDistance * 2;
 
 						// Get the resource at this location:
 						var resType = resLayer.GetResource(loc);
-
-						if (resType == null) return 1;
+						if (resType == null)
+							return Constants.SquareDistance;
 
 						// Can the harvester collect this kind of resource?
-						if (!harvInfo.Resources.Contains(resType.Info.Name)) return 1;
+						if (!harvInfo.Resources.Contains(resType.Info.Name))
+							return Constants.SquareDistance;
 
 						if (territory != null)
 						{
 							// Another harvester has claimed this resource:
 							ResourceClaim claim;
-							if (territory.IsClaimedByAnyoneElse(self, loc, out claim)) return 1;
+							if (territory.IsClaimedByAnyoneElse(self, loc, out claim))
+								return Constants.SquareDistance;
 						}
 
 						return 0;
