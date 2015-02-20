@@ -18,7 +18,7 @@ namespace OpenRA.Mods.Common
 {
 	public static class ActorExts
 	{
-		public static bool AppearsFriendlyTo(this Actor self, Actor toActor)
+		public static bool AppearsFriendlyTo(this IActor self, IActor toActor)
 		{
 			var stance = toActor.Owner.Stances[self.Owner];
 			if (stance == Stance.Ally)
@@ -30,7 +30,7 @@ namespace OpenRA.Mods.Common
 			return stance == Stance.Ally;
 		}
 
-		public static bool AppearsHostileTo(this Actor self, Actor toActor)
+		public static bool AppearsHostileTo(this IActor self, IActor toActor)
 		{
 			var stance = toActor.Owner.Stances[self.Owner];
 			if (stance == Stance.Ally)
@@ -80,23 +80,23 @@ namespace OpenRA.Mods.Common
 			return Target.Invalid;
 		}
 
-		public static void NotifyBlocker(this Actor self, IEnumerable<Actor> blockers)
+		public static void NotifyBlocker(this IActor self, IEnumerable<IActor> blockers)
 		{
 			foreach (var blocker in blockers)
 			{
 				foreach (var moveBlocked in blocker.TraitsImplementing<INotifyBlockingMove>())
-					moveBlocked.OnNotifyBlockingMove(blocker, self);
+					moveBlocked.OnNotifyBlockingMove(blocker as Actor, self as Actor);
 			}
 		}
 
-		public static void NotifyBlocker(this Actor self, CPos position)
+		public static void NotifyBlocker(this IActor self, CPos position)
 		{
-			NotifyBlocker(self, self.World.ActorMap.GetUnitsAt(position));
+			NotifyBlocker(self, self.World.ActorMap.GetActorsAt(position));
 		}
 
-		public static void NotifyBlocker(this Actor self, IEnumerable<CPos> positions)
+		public static void NotifyBlocker(this IActor self, IEnumerable<CPos> positions)
 		{
-			NotifyBlocker(self, positions.SelectMany(p => self.World.ActorMap.GetUnitsAt(p)));
+			NotifyBlocker(self, positions.SelectMany(p => self.World.ActorMap.GetActorsAt(p)));
 		}
 	}
 }

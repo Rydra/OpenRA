@@ -127,11 +127,11 @@ namespace OpenRA.Mods.Common.Pathfinder
 		{
 			int movementCost;
 			if (mobileInfo.CanEnterCell(
-				World as World,
-				Actor as Actor,
+				World,
+				Actor,
 				destNode,
 				out movementCost,
-				IgnoredActor as Actor,
+				IgnoredActor,
 				checkConditions) && !(CustomBlock != null && CustomBlock(destNode)))
 			{
 				return CalculateCellCost(destNode, direction, movementCost);

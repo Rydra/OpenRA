@@ -31,7 +31,7 @@ namespace OpenRA.Traits
 
 		public DrawLineToTarget(Actor self, DrawLineToTargetInfo info) { this.self = self; this.info = info; }
 
-		public void SetTarget(Actor self, Target target, Color c, bool display)
+		public void SetTarget(IActor self, Target target, Color c, bool display)
 		{
 			this.targets = new List<Target> { target };
 			this.c = c;
@@ -92,12 +92,12 @@ namespace OpenRA.Traits
 				self.World.AddFrameEndTask(w => line.SetTargets(self, targets, color, false));
 		}
 
-		public static void SetTargetLine(this Actor self, Target target, Color color)
+		public static void SetTargetLine(this IActor self, Target target, Color color)
 		{
 			self.SetTargetLine(target, color, true);
 		}
 
-		public static void SetTargetLine(this Actor self, Target target, Color color, bool display)
+		public static void SetTargetLine(this IActor self, Target target, Color color, bool display)
 		{
 			if (self.Owner != self.World.LocalPlayer)
 				return;

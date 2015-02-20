@@ -45,7 +45,7 @@ namespace OpenRA.Mods.Common.Pathfinder
 
 		IPathSearch WithCustomBlocker(Func<CPos, bool> customBlock);
 
-		IPathSearch WithIgnoredActor(Actor b);
+		IPathSearch WithIgnoredActor(IActor b);
 
 		IPathSearch WithHeuristic(Func<CPos, int> h);
 
@@ -161,7 +161,7 @@ namespace OpenRA.Mods.Common.Pathfinder
 			return this;
 		}
 
-		public IPathSearch WithIgnoredActor(Actor b)
+		public IPathSearch WithIgnoredActor(IActor b)
 		{
 			Graph.IgnoredActor = b;
 			return this;

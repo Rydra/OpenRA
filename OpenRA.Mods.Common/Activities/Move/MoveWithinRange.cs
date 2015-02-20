@@ -21,14 +21,14 @@ namespace OpenRA.Mods.Common.Activities
 		readonly WRange maxRange;
 		readonly WRange minRange;
 
-		public MoveWithinRange(Actor self, Target target, WRange minRange, WRange maxRange)
+		public MoveWithinRange(IActor self, ITarget target, WRange minRange, WRange maxRange)
 			: base(self, target)
 		{
 			this.minRange = minRange;
 			this.maxRange = maxRange;
 		}
 
-		protected override bool ShouldStop(Actor self, CPos oldTargetPosition)
+		protected override bool ShouldStop(IActor self, CPos oldTargetPosition)
 		{
 			// We are now in range. Don't move any further!
 			// HACK: This works around the pathfinder not returning the shortest path
@@ -36,13 +36,13 @@ namespace OpenRA.Mods.Common.Activities
 			return Target.IsInRange(cp, maxRange) && !Target.IsInRange(cp, minRange);
 		}
 
-		protected override bool ShouldRepath(Actor self, CPos oldTargetPosition)
+		protected override bool ShouldRepath(IActor self, CPos oldTargetPosition)
 		{
 			var cp = self.CenterPosition;
 			return targetPosition != oldTargetPosition && (!Target.IsInRange(cp, maxRange) || Target.IsInRange(cp, minRange));
 		}
 
-		protected override IEnumerable<CPos> CandidateMovementCells(Actor self)
+		protected override IEnumerable<CPos> CandidateMovementCells(IActor self)
 		{
 			var map = self.World.Map;
 			var maxCells = (maxRange.Range + 1023) / 1024;

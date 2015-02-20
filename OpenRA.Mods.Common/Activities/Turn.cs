@@ -20,7 +20,7 @@ namespace OpenRA.Mods.Common.Activities
 		readonly IEnumerable<IDisableMove> moveDisablers;
 		readonly int desiredFacing;
 
-		public Turn(Actor self, int desiredFacing)
+		public Turn(IActor self, int desiredFacing)
 		{
 			moveDisablers = self.TraitsImplementing<IDisableMove>();
 			this.desiredFacing = desiredFacing;

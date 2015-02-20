@@ -35,7 +35,7 @@ namespace OpenRA.Traits
 
 	public static class RejectsOrdersExts
 	{
-		public static bool AcceptsOrder(this Actor self, string orderString)
+		public static bool AcceptsOrder(this IActor self, string orderString)
 		{
 			var r = self.TraitOrDefault<RejectsOrders>();
 			return r == null || r.Except.Contains(orderString);

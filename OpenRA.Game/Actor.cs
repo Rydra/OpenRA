@@ -28,14 +28,30 @@ namespace OpenRA
 		IWorld World { get; }
 		uint ActorID { get; }
 		Player Owner { get; set; }
-
+		CPos Location { get; }
+		bool IsInWorld { get; }
+		bool Destroyed { get; }
+		bool IsDead { get; }
+		bool IsIdle { get; }
+		int Generation { get; set; }
+		IEffectiveOwner EffectiveOwner { get; }
+		WPos CenterPosition { get; }
 		T TraitOrDefault<T>();
 		T Trait<T>();
 		IEnumerable<T> TraitsImplementing<T>();
+		Activity GetCurrentActivity();
 
+		/// <summary>
+		/// Obtains a Trait from its Info
+		/// </summary>
 		T TraitInfo<T>();
-
+		bool HasTrait<T>();
+		void QueueActivity(bool queued, Activity nextActivity);
+		void QueueActivity(Activity nextActivity);
+		void CancelActivity();
 		IEnumerable<IRenderable> Render(WorldRenderer wr);
+		IOccupySpace OccupiesSpace { get; }
+		bool IsAlliedWith(IActor actor);
 	}
 
 	public class Actor : IScriptBindable, IScriptNotifyBind, ILuaTableBinding, ILuaEqualityBinding, ILuaToStringBinding, IEquatable<Actor>, IActor
@@ -58,6 +74,12 @@ namespace OpenRA
 
 		public Group Group;
 		public int Generation;
+
+		int IActor.Generation
+		{
+			get { return this.Generation; }
+			set { this.Generation = value; }
+		}
 
 		Lazy<Rectangle> bounds;
 		Lazy<IFacing> facing;
@@ -170,6 +192,11 @@ namespace OpenRA
 				currentActivity = nextActivity;
 			else
 				currentActivity.Queue(nextActivity);
+		}
+
+		public bool IsAlliedWith(IActor actor)
+		{
+			return Owner.IsAlliedWith(actor.Owner);
 		}
 
 		public void CancelActivity()

@@ -146,7 +146,14 @@ namespace OpenRA
 		}
 	}
 
-	public class TileSet
+	public interface ITileSet
+	{
+		TerrainTypeInfo[] TerrainInfo { get; }
+
+		bool TryGetTerrainIndex(string type, out byte index);
+	}
+
+	public class TileSet : ITileSet
 	{
 		static readonly string[] Fields = { "Name", "Id", "SheetSize", "Palette", "PlayerPalette", "Extensions", "WaterPaletteRotationBase", "EditorTemplateOrder", "IgnoreTileSpriteOffsets", "MaximumHeight" };
 
@@ -165,6 +172,12 @@ namespace OpenRA
 		public readonly Dictionary<ushort, TerrainTemplateInfo> Templates = new Dictionary<ushort, TerrainTemplateInfo>();
 
 		public readonly TerrainTypeInfo[] TerrainInfo;
+
+		TerrainTypeInfo[] ITileSet.TerrainInfo
+		{
+			get { return this.TerrainInfo; }
+		}
+
 		readonly Dictionary<string, byte> terrainIndexByType = new Dictionary<string, byte>();
 		readonly byte defaultWalkableTerrainIndex;
 

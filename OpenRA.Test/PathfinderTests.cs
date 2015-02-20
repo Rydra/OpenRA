@@ -11,14 +11,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
 using Moq;
 using NUnit.Framework;
 using OpenRA;
 using OpenRA.Mods.Common.Pathfinder;
 using OpenRA.Mods.Common.Traits;
-using OpenRA.Test;
 
 namespace PathfinderTests
 {
@@ -27,35 +24,53 @@ namespace PathfinderTests
 	{
 		const int Width = 128;
 		const int Height = 128;
-		IWorld world;
-		IMap map;
-		IActor actor;
+		Mock<IWorld> world;
+		Mock<IMap> map;
+		Mock<IActor> actor;
+		Mock<IMobileInfo> mobileInfo;
 
 		[SetUp]
 		public void Setup()
 		{
-			map = new FakeMap(Width, Height);
-			var worldactor = new FakeActor();
-			world = new FakeWorld(map, worldactor);
-			actor = new FakeActor(world);
+			map = GenerateMap(Width, Height);
+			world = GenerateWorld(map.Object);
+			mobileInfo = GenerateMobileInfoMock();
+			actor = GenerateActor(new Mock<IMobile>().Object, world.Object, mobileInfo.Object);
 		}
 
-		IMap BuildFakeMap(int mapWidth, int mapHeight)
+		private static Mock<IMobileInfo> GenerateMobileInfoMock()
+		{
+			var mobileInfo = new Mock<IMobileInfo>();
+			mobileInfo.SetupAllProperties();
+			return mobileInfo;
+		}
+
+		static Mock<IMap> GenerateMap(int mapWidth, int mapHeight)
 		{
 			var map = new Mock<IMap>();
 			map.SetupGet(m => m.TileShape).Returns(TileShape.Rectangle);
 			map.Setup(m => m.MapSize).Returns(new int2(mapWidth, mapHeight));
-			map.Setup(m => m.Contains(It.Is<CPos>(pos => pos.X >= 0 && pos.X < mapWidth && pos.Y >= 0 && pos.Y < mapHeight))).Returns(true);
+			map.Setup(m => m.Contains(It.Is<CPos>(pos => IsValidPos(pos, mapWidth, mapHeight)))).Returns(true);
 
-			return map.Object;
+			return map;
 		}
 
-		IWorld BuildFakeWorld(IMap map)
+		static Mock<IWorld> GenerateWorld(IMap map)
 		{
 			var world = new Mock<IWorld>();
 			world.SetupGet(m => m.Map).Returns(map);
 			world.SetupGet(m => m.WorldActor).Returns(new Mock<IActor>().Object);
-			return world.Object;
+			return world;
+		}
+
+		static Mock<IActor> GenerateActor(IMobile mobile, IWorld world, IMobileInfo mobileInfo)
+		{
+			var actor = new Mock<IActor>();
+			actor.Setup(x => x.Trait<IMobile>()).Returns(mobile);
+			actor.SetupGet(x => x.World).Returns(world);
+			actor.SetupGet(x => x.Location).Returns(() => mobile.ToCell);
+			actor.Setup(x => x.TraitInfo<IMobileInfo>()).Returns(mobileInfo);
+			return actor;
 		}
 
 		static bool IsValidPos(CPos pos, int mapWidth, int mapHeight)
@@ -63,88 +78,91 @@ namespace PathfinderTests
 			return pos.X >= 0 && pos.X < mapWidth && pos.Y >= 0 && pos.Y < mapHeight;
 		}
 
-		[Test]
-		[Ignore]
-		public void FindPathOnRoughTerrainTest()
+		static IEnumerable<CPos[]> TestData()
+		{
+			yield return new[] { new CPos(1, 1), new CPos(125, 74), new CPos(50, 100) };
+			yield return new[] { new CPos(0, 0), new CPos(51, 100), new CPos(50, 100) };
+			yield return new[] { new CPos(0, 0), new CPos(49, 50), new CPos(49, 50) };
+			yield return new[] { new CPos(127, 0), new CPos(50, 101), new CPos(50, 101) };
+		}
+
+		[TestCaseSource("TestData")]
+		public void FindPathOnRoughTerrainTest(CPos source, CPos target, CPos expected)
 		{
 			// Arrange
-
 			// Create the MobileInfo Mock. Playing with this can help to
 			// check the different paths and points a unit can walk into
-			var mi = new FakeMobileInfo(pos => !(!IsValidPos(pos, Width, Height) ||
+			int dummy = 125;
+			mobileInfo.Setup(
+				x =>
+				x.CanEnterCell(
+					world.Object,
+					actor.Object,
+					It.Is<CPos>(pos => !(!IsValidPos(pos, Width, Height) ||
 					(pos.X == 50 && pos.Y < 100) ||
-					(pos.X == 100 && pos.Y > 50)));
+					(pos.X == 100 && pos.Y > 50))),
+					out dummy,
+					It.IsAny<IActor>(),
+					It.IsAny<CellConditions>())).Returns(true);
 
-			var from = new CPos(1, 1);
-			var target = new CPos(125, 75);
+			int dummy2 = int.MaxValue;
+			mobileInfo.Setup(
+				x =>
+				x.CanEnterCell(
+					world.Object,
+					actor.Object,
+					It.Is<CPos>(pos => !IsValidPos(pos, Width, Height) ||
+					(pos.X == 50 && pos.Y < 100) ||
+					(pos.X == 100 && pos.Y > 50)),
+					out dummy2,
+					It.IsAny<IActor>(),
+					It.IsAny<CellConditions>())).Returns(false);
 
-			IPathSearch search;
-			Stopwatch stopwatch;
-			List<CPos> path1 = null;
-			List<CPos> path2 = null;
-			List<CPos> path3 = null;
-			List<CPos> path4 = null;
-			List<CPos> path5 = null;
-			List<CPos> path6 = null;
-			List<CPos> path7 = null;
-			List<CPos> path8 = null;
-			var pathfinder = new PathFinder(world);
+			var pathfinder = new PathFinder(world.Object);
 
 			// Act
-			stopwatch = new Stopwatch();
-			foreach (var a in Enumerable.Range(1, 50))
-			{
-				search = PathSearch.FromPoint(world, mi, actor, from, target, true);
-				stopwatch.Start();
-				path5 = pathfinder.FindPath(search);
+			var search = PathSearch.FromPoint(world.Object, mobileInfo.Object, actor.Object, source, target, true);
+			var path = pathfinder.FindPath(search);
+			Assert.Contains(expected, path);
+		}
 
-				stopwatch.Stop();
-				search = PathSearch.FromPoint(world, mi, actor, new CPos(0, 0), new CPos(51, 100), true);
-				stopwatch.Start();
-				path6 = pathfinder.FindPath(search);
+		[Test]
+		[Ignore("Not implemented yet")]
+		public void PathNotFoundTest()
+		{
+			// Arrange
+			// Create the MobileInfo Mock. Playing with this can help to
+			// check the different paths and points a unit can walk into
+			int dummy = 125;
+			mobileInfo.Setup(
+				x =>
+				x.CanEnterCell(
+					world.Object,
+					actor.Object,
+					It.Is<CPos>(pos => !(!IsValidPos(pos, Width, Height) ||
+					(pos.X == 50))),
+					out dummy,
+					It.IsAny<IActor>(),
+					It.IsAny<CellConditions>())).Returns(true);
 
-				stopwatch.Stop();
-				search = PathSearch.FromPoint(world, mi, actor, new CPos(0, 0), new CPos(49, 50), true);
-				stopwatch.Start();
-				path7 = pathfinder.FindPath(search);
+			int dummy2 = int.MaxValue;
+			mobileInfo.Setup(
+				x =>
+				x.CanEnterCell(
+					world.Object,
+					actor.Object,
+					It.Is<CPos>(pos => !IsValidPos(pos, Width, Height) ||
+					(pos.X == 50)),
+					out dummy2,
+					It.IsAny<IActor>(),
+					It.IsAny<CellConditions>())).Returns(false);
 
-				stopwatch.Stop();
-				search = PathSearch.FromPoint(world, mi, actor, new CPos(127, 0), new CPos(50, 101), true);
-				stopwatch.Start();
-				path8 = pathfinder.FindPath(search);
-			}
+			var pathfinder = new PathFinder(world.Object);
 
-			Console.WriteLine("I took " + stopwatch.ElapsedMilliseconds + " ms with new pathfinder");
-
-			IPathSearch search2;
-			stopwatch = new Stopwatch();
-			foreach (var a in Enumerable.Range(1, 50))
-			{
-				search = PathSearch.FromPoint(world, mi, actor, from, target, true);
-				search2 = PathSearch.FromPoint(world, mi, actor, target, from, true).Reverse();
-				stopwatch.Start();
-				path5 = pathfinder.FindBidiPath(search, search2);
-
-				stopwatch.Stop();
-				search = PathSearch.FromPoint(world, mi, actor, new CPos(0, 0), new CPos(51, 100), true);
-				search2 = PathSearch.FromPoint(world, mi, actor, new CPos(51, 100), new CPos(0, 0), true).Reverse();
-				stopwatch.Start();
-				path6 = pathfinder.FindBidiPath(search, search2);
-
-				stopwatch.Stop();
-				search = PathSearch.FromPoint(world, mi, actor, new CPos(0, 0), new CPos(49, 50), true);
-				search2 = PathSearch.FromPoint(world, mi, actor, new CPos(49, 50), new CPos(0, 0), true).Reverse();
-				stopwatch.Start();
-				path7 = pathfinder.FindBidiPath(search, search2);
-
-				stopwatch.Stop();
-				search = PathSearch.FromPoint(world, mi, actor, new CPos(127, 0), new CPos(50, 101), true);
-				search2 = PathSearch.FromPoint(world, mi, actor, new CPos(50, 101), new CPos(127, 0), true).Reverse();
-				stopwatch.Start();
-				path8 = pathfinder.FindBidiPath(search, search2);
-			}
-
-			Console.WriteLine("I took " + stopwatch.ElapsedMilliseconds + " ms with new FindBidipathfinder");
+			// Act
+			var search = PathSearch.FromPoint(world.Object, mobileInfo.Object, actor.Object, new CPos(1, 1), new CPos(125, 75), true);
+			var path = pathfinder.FindPath(search);
+			Assert.Contains(new CPos(50, 100), path);
 		}
 
 		static int Est1(CPos here, CPos destination)
@@ -208,21 +226,31 @@ namespace PathfinderTests
 			}
 		}
 
+		static IEnumerable<object[]> RayCastingTestData()
+		{
+			yield return new object[] { new CPos(1, 3), new CPos(3, 0),
+				new[]
+					{
+						new CPos(1, 3), new CPos(1, 2), new CPos(2, 2), new CPos(2, 1),
+   						new CPos(3, 1), new CPos(3, 0)
+					}
+			};
+		}
+
 		/// <summary>
 		/// Test for the future feature of path smoothing for Pathfinder
 		/// </summary>
-		[Test]
-		public void RayCastingTest()
+		[TestCaseSource("RayCastingTestData")]
+		public void RayCastingTest(CPos source, CPos target, IEnumerable<CPos> expectedCuts)
 		{
 			// Arrange
 			var sut = new RayCaster();
-			CPos source = new CPos(1, 3);
-			CPos target = new CPos(3, 0);
 
 			// Act
-			var valid = sut.RayCast(source, target);
+			var cutCells = sut.RayCast(source, target);
 
 			// Assert
+			CollectionAssert.AreEqual(expectedCuts, cutCells);
 		}
 	}
 
@@ -231,18 +259,18 @@ namespace PathfinderTests
 		// Algorithm obtained in http://playtechs.blogspot.co.uk/2007/03/raytracing-on-grid.html
 		public IEnumerable<CPos> RayCast(CPos source, CPos target)
 		{
-			int dx = Math.Abs(target.X - source.X);
-			int dy = Math.Abs(target.Y - source.Y);
-			int x = source.X;
-			int y = source.Y;
-
-			int x_inc = (target.X > source.X) ? 1 : -1;
-			int y_inc = (target.Y > source.Y) ? 1 : -1;
-			int error = dx - dy;
+			var dx = Math.Abs(target.X - source.X);
+			var dy = Math.Abs(target.Y - source.Y);
+			var x = source.X;
+			var y = source.Y;
+			var n = 1 + dx + dy;
+			var x_inc = (target.X > source.X) ? 1 : -1;
+			var y_inc = (target.Y > source.Y) ? 1 : -1;
+			var error = dx - dy;
 			dx *= 2;
 			dy *= 2;
 
-			for (int n = 1 + dx + dy; n > 0; --n)
+			for (; n > 0; --n)
 			{
 				yield return new CPos(x, y);
 
@@ -257,11 +285,6 @@ namespace PathfinderTests
 					error += dx;
 				}
 			}
-		}
-
-		public bool RayClear()
-		{
-			return true;
 		}
 	}
 }

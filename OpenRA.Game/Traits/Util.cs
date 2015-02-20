@@ -61,7 +61,7 @@ namespace OpenRA.Traits
 			return a / step;
 		}
 
-		public static WPos BetweenCells(World w, CPos from, CPos to)
+		public static WPos BetweenCells(IWorld w, CPos from, CPos to)
 		{
 			return WPos.Lerp(w.Map.CenterOfCell(from), w.Map.CenterOfCell(to), 1, 2);
 		}
@@ -131,7 +131,7 @@ namespace OpenRA.Traits
 			return cells.SelectMany(c => Neighbours(c, allowDiagonal)).Distinct();
 		}
 
-		public static IEnumerable<CPos> AdjacentCells(World w, Target target)
+		public static IEnumerable<CPos> AdjacentCells(IWorld w, ITarget target)
 		{
 			var cells = target.Positions.Select(p => w.Map.CellContaining(p)).Distinct();
 			return ExpandFootprint(cells, true);

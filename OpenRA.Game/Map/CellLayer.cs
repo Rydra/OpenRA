@@ -18,8 +18,8 @@ namespace OpenRA
 	// Represents a layer of "something" that covers the map
 	public class CellLayer<T> : IEnumerable<T>
 	{
-		public readonly Size Size;
-		public readonly TileShape Shape;
+		public Size Size { get; private set; }
+		public TileShape Shape { get; private set; }
 		public event Action<CPos> CellEntryChanged = null;
 
 		readonly T[] entries;

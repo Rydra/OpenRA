@@ -27,9 +27,18 @@ namespace OpenRA
 	public interface IWorld
 	{
 		IActor WorldActor { get; }
+		IActorMap ActorMap { get; }
 		int WorldTick { get; }
 		IMap Map { get; }
-		TileSet TileSet { get; }
+		ITileSet TileSet { get; }
+		ScreenMap ScreenMap { get; }
+		bool AllowDevCommands { get; }
+		IOrderGenerator OrderGenerator { get; set; }
+		Player LocalPlayer { get; }
+		Player RenderPlayer { get; set; }
+		MersenneTwister SharedRandom { get; }
+		IEnumerable<TraitPair<T>> ActorsWithTrait<T>();
+		void AddFrameEndTask(Action<World> a);
 	}
 
 	public class World : IWorld
@@ -53,6 +62,10 @@ namespace OpenRA
 		public Session LobbyInfo { get { return OrderManager.LobbyInfo; } }
 
 		public readonly MersenneTwister SharedRandom;
+		MersenneTwister IWorld.SharedRandom
+		{
+			get { return this.SharedRandom; }
+		}
 
 		public readonly List<Player> Players = new List<Player>();
 
@@ -128,10 +141,23 @@ namespace OpenRA
 		IMap IWorld.Map { get { return Map; } }
 
 		public readonly TileSet TileSet;
-		TileSet IWorld.TileSet { get { return TileSet; } }
+		ITileSet IWorld.TileSet
+		{
+			get { return TileSet; }
+		}
 
 		public readonly ActorMap ActorMap;
+		IActorMap IWorld.ActorMap
+		{
+			get { return ActorMap; }
+		}
+
 		public readonly ScreenMap ScreenMap;
+		ScreenMap IWorld.ScreenMap
+		{
+			get { return ScreenMap; }
+		}
+
 		public readonly WorldType Type;
 
 		readonly GameInformation gameInfo;

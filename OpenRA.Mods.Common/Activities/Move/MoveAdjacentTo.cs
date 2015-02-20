@@ -22,21 +22,21 @@ namespace OpenRA.Mods.Common.Activities
 	{
 		static readonly List<CPos> NoPath = new List<CPos>();
 
-		readonly Mobile mobile;
+		readonly IMobile mobile;
 		readonly IPathFinder pathFinder;
 		readonly DomainIndex domainIndex;
 		readonly uint movementClass;
 
-		protected Target Target { get; private set; }
+		protected ITarget Target { get; private set; }
 		protected CPos targetPosition;
 		Activity inner;
 		bool repath;
 
-		public MoveAdjacentTo(Actor self, Target target)
+		public MoveAdjacentTo(IActor self, ITarget target)
 		{
 			Target = target;
 
-			mobile = self.Trait<Mobile>();
+			mobile = self.Trait<IMobile>();
 			pathFinder = self.World.WorldActor.Trait<IPathFinder>();
 			domainIndex = self.World.WorldActor.Trait<DomainIndex>();
 			movementClass = (uint)mobile.Info.GetMovementClass(self.World.TileSet);
@@ -47,17 +47,17 @@ namespace OpenRA.Mods.Common.Activities
 			repath = true;
 		}
 
-		protected virtual bool ShouldStop(Actor self, CPos oldTargetPosition)
+		protected virtual bool ShouldStop(IActor self, CPos oldTargetPosition)
 		{
 			return false;
 		}
 
-		protected virtual bool ShouldRepath(Actor self, CPos oldTargetPosition)
+		protected virtual bool ShouldRepath(IActor self, CPos oldTargetPosition)
 		{
 			return targetPosition != oldTargetPosition;
 		}
 
-		protected virtual IEnumerable<CPos> CandidateMovementCells(Actor self)
+		protected virtual IEnumerable<CPos> CandidateMovementCells(IActor self)
 		{
 			return Util.AdjacentCells(self.World, Target);
 		}
@@ -98,7 +98,7 @@ namespace OpenRA.Mods.Common.Activities
 			else
 			{
 				// Target became invalid. Move to its last known position.
-				Target = Target.FromCell(self.World, targetPosition);
+				Target = OpenRA.Traits.Target.FromCell(self.World, targetPosition);
 			}
 
 			// Ticks the inner move activity to actually move the actor.
@@ -107,7 +107,7 @@ namespace OpenRA.Mods.Common.Activities
 			return this;
 		}
 
-		List<CPos> CalculatePathToTarget(Actor self)
+		List<CPos> CalculatePathToTarget(IActor self)
 		{
 			var targetCells = CandidateMovementCells(self);
 			var searchCells = new List<CPos>();
@@ -131,7 +131,7 @@ namespace OpenRA.Mods.Common.Activities
 			if (inner != null)
 				return inner.GetTargets(self);
 
-			return Target.None;
+			return OpenRA.Traits.Target.None;
 		}
 
 		public override void Cancel(Actor self)

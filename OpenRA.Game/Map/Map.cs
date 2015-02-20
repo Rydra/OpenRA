@@ -114,13 +114,23 @@ namespace OpenRA
 	public interface IMap
 	{
 		TileShape TileShape { get; }
-
 		int2 MapSize { get; set; }
+		SubCell DefaultSubCell { get; }
+		CellLayer<byte> CustomTerrain { get; }
+		Ruleset Rules { get; }
+		byte GetTerrainIndex(CPos cell);
+		IEnumerable<CPos> FindTilesInAnnulus(CPos center, int minRange, int maxRange);
+		CPos Clamp(CPos cell);
+		WPos CenterOfSubCell(CPos cell, SubCell subCell);
+		TerrainTypeInfo GetTerrainInfo(CPos cell);
 		bool Contains(CPos cell);
 		CPos CellContaining(WPos pos);
 		WVec OffsetOfSubCell(SubCell subCell);
 		IEnumerable<CPos> FindTilesInCircle(CPos center, int maxRange);
 		WPos CenterOfCell(CPos cell);
+
+		int FacingBetween(CPos cell, CPos towards, int fallbackfacing);
+		WVec[] SubCellOffsets { get; }
 	}
 
 	public class Map : IMap
@@ -133,7 +143,20 @@ namespace OpenRA
 		}
 
 		[FieldLoader.Ignore] public readonly WVec[] SubCellOffsets;
+		WVec[] IMap.SubCellOffsets
+		{
+			get
+			{
+				return SubCellOffsets;
+			}
+		}
+
 		public readonly SubCell DefaultSubCell;
+		SubCell IMap.DefaultSubCell
+		{
+			get { return this.DefaultSubCell; }
+		}
+
 		public readonly SubCell LastSubCell;
 		[FieldLoader.Ignore] public IFolder Container;
 		public string Path { get; private set; }
@@ -216,6 +239,11 @@ namespace OpenRA
 
 		[FieldLoader.Ignore] Lazy<TileSet> cachedTileSet;
 		[FieldLoader.Ignore] Lazy<Ruleset> rules;
+		CellLayer<byte> IMap.CustomTerrain
+		{
+			get { return CustomTerrain; }
+		}
+
 		public Ruleset Rules { get { return rules != null ? rules.Value : null; } }
 		public SequenceProvider SequenceProvider { get { return Rules.Sequences[Tileset]; } }
 

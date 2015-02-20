@@ -10,10 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using OpenRA.Mods.Common.Traits;
+using OpenRA.Traits;
 
+// Classes from this file should be used in
+// testing when we want to microbenchmark
 namespace OpenRA.Test
 {
 	public class FakeActor : IActor
@@ -76,6 +77,82 @@ namespace OpenRA.Test
 		{
 			// TODO: Complete member initialization
 		}
+
+		public CPos Location
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public bool IsInWorld
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public bool Destroyed
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public bool IsIdle
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public Traits.IEffectiveOwner EffectiveOwner
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public WPos CenterPosition
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public Activities.Activity GetCurrentActivity()
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public bool HasTrait<T>()
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public void QueueActivity(bool queued, Activities.Activity nextActivity)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public void QueueActivity(Activities.Activity nextActivity)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public void CancelActivity()
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public IOccupySpace OccupiesSpace
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		public bool IsAlliedWith(IActor actor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public bool IsDead
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		public int Generation
+		{
+			get { throw new NotImplementedException(); }
+			set { throw new NotImplementedException(); }
+		}
 	}
 
 	public class FakeWorld : IWorld
@@ -98,7 +175,7 @@ namespace OpenRA.Test
 			get { return map; }
 		}
 
-		public TileSet TileSet
+		public ITileSet TileSet
 		{
 			get { throw new NotImplementedException("No need to implement this yet"); }
 		}
@@ -115,6 +192,60 @@ namespace OpenRA.Test
 			this.map = map;
 			this.worldactor = worldactor;
 		}
+
+		public IActorMap ActorMap
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public Traits.ScreenMap ScreenMap
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public bool AllowDevCommands
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public IEnumerable<TraitPair<T>> ActorsWithTrait<T>()
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public Player LocalPlayer
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public Player RenderPlayer
+		{
+			get
+			{
+				throw new NotImplementedException("No need to implement this yet");
+			}
+
+			set
+			{
+				throw new NotImplementedException("No need to implement this yet");
+			}
+		}
+
+		public Support.MersenneTwister SharedRandom
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public void AddFrameEndTask(Action<World> a)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public IOrderGenerator OrderGenerator
+		{
+			get { throw new NotImplementedException(); }
+			set { throw new NotImplementedException(); }
+		}
 	}
 
 	public class FakeMobileInfo : IMobileInfo
@@ -123,9 +254,7 @@ namespace OpenRA.Test
 
 		public int MovementCostForCell(World world, CPos cell)
 		{
-			if (conditions(cell))
-				return 125;
-			return int.MaxValue;
+			return 125;
 		}
 
 		public bool CanEnterCell(World world, Actor self, CPos cell, out int movementCost, Actor ignoreActor = null, CellConditions check = CellConditions.All)
@@ -147,6 +276,104 @@ namespace OpenRA.Test
 		public bool CanEnterCell(World world, Actor self, CPos cell, Actor ignoreActor = null, CellConditions check = CellConditions.All)
 		{
 			return conditions(cell);
+		}
+
+		public int MovementCostForCell(IWorld world, CPos cell)
+		{
+			if (conditions(cell))
+				return 125;
+			return int.MaxValue;
+		}
+
+		public bool CanEnterCell(IWorld world, IActor self, CPos cell, out int movementCost, IActor ignoreActor = null, CellConditions check = CellConditions.All)
+		{
+			movementCost = MovementCostForCell(world, cell);
+			return conditions(cell);
+		}
+
+		public bool CanEnterCell(IWorld world, IActor self, CPos cell, IActor ignoreActor = null, CellConditions check = CellConditions.All)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public int GetMovementClass(ITileSet tileset)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public int ROT
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public bool SharesCell
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public int InitialFacing
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public string[] Crushes
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public bool MoveIntoShroud
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public bool OnRails
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public int Speed
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public int TileSetMovementHash(ITileSet tileSet)
+		{
+			return 0;
+		}
+
+		public bool CanMoveFreelyInto(IWorld world, IActor self, CPos cell, IActor ignoreActor, CellConditions check)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public Traits.SubCell GetAvailableSubCell(IWorld world, IActor self, CPos cell, Traits.SubCell preferredSubCell = SubCell.Any, IActor ignoreActor = null, CellConditions check = CellConditions.All)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public Primitives.Cache<ITileSet, TerrainInfo[]> TilesetTerrainInfo
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public int WaitAverage
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		public int WaitSpread
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		public bool CollidesWithOtherActorsInCell(IWorld world, IActor self, CPos cell, IActor ignoreActor, CellConditions check)
+		{
+			throw new NotImplementedException();
+		}
+
+		public SubCell CheckAvailableSubCell(IWorld world, IActor self, CPos cell, SubCell preferredSubCell, IActor ignoreActor, CellConditions check)
+		{
+			throw new NotImplementedException();
 		}
 
 		public object Create(ActorInitializer init)
@@ -201,6 +428,56 @@ namespace OpenRA.Test
 		public WPos CenterOfCell(CPos cell)
 		{
 			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public byte GetTerrainIndex(CPos cell)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public Traits.SubCell DefaultSubCell
+		{
+			get { throw new NotImplementedException("No need to implement this yet"); }
+		}
+
+		public IEnumerable<CPos> FindTilesInAnnulus(CPos center, int minRange, int maxRange)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public CPos Clamp(CPos cell)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public WPos CenterOfSubCell(CPos cell, Traits.SubCell subCell)
+		{
+			throw new NotImplementedException("No need to implement this yet");
+		}
+
+		public Ruleset Rules
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		public TerrainTypeInfo GetTerrainInfo(CPos cell)
+		{
+			throw new NotImplementedException();
+		}
+
+		public CellLayer<byte> CustomTerrain
+		{
+			get { throw new NotImplementedException(); }
+		}
+
+		public int FacingBetween(CPos cell, CPos towards, int fallbackfacing)
+		{
+			throw new NotImplementedException();
+		}
+
+		public WVec[] SubCellOffsets
+		{
+			get { throw new NotImplementedException(); }
 		}
 	}
 }
