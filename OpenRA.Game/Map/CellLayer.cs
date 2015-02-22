@@ -18,8 +18,8 @@ namespace OpenRA
 	// Represents a layer of "something" that covers the map
 	public class CellLayer<T> : IEnumerable<T>
 	{
-		public Size Size { get; private set; }
-		public TileShape Shape { get; private set; }
+		public readonly Size Size;
+		public readonly TileShape Shape;
 		public event Action<CPos> CellEntryChanged = null;
 
 		readonly T[] entries;
@@ -47,15 +47,17 @@ namespace OpenRA
 
 		public static CellLayer<T> CreateInstance(Func<MPos, T> initialCellValueFactory, Size size, TileShape tileShape)
 		{
-			var cellInfoLayer = new CellLayer<T>(tileShape, size);
+			var cellLayer = new CellLayer<T>(tileShape, size);
 			for (var v = 0; v < size.Height; v++)
+			{
 				for (var u = 0; u < size.Width; u++)
 				{
 					var mpos = new MPos(u, v);
-					cellInfoLayer[mpos] = initialCellValueFactory(mpos);
+					cellLayer[mpos] = initialCellValueFactory(mpos);
 				}
+			}
 
-			return cellInfoLayer;
+			return cellLayer;
 		}
 
 		// Resolve an array index from cell coordinates

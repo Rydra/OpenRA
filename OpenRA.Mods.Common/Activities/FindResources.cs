@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using OpenRA.Activities;
+using OpenRA.Mods.Common.Pathfinder;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Traits;
 
@@ -57,28 +58,28 @@ namespace OpenRA.Mods.Common.Activities
 					{
 						// Avoid this cell:
 						if (avoidCell.HasValue && loc == avoidCell.Value)
-							return Constants.SquareDistance;
+							return Constants.CellCost;
 
 						// Don't harvest out of range:
 						var distSquared = (loc - searchFromLoc).LengthSquared;
 						if (distSquared > searchRadiusSquared)
-							return Constants.SquareDistance * 2;
+							return Constants.CellCost * 2;
 
 						// Get the resource at this location:
 						var resType = resLayer.GetResource(loc);
 						if (resType == null)
-							return Constants.SquareDistance;
+							return Constants.CellCost;
 
 						// Can the harvester collect this kind of resource?
 						if (!harvInfo.Resources.Contains(resType.Info.Name))
-							return Constants.SquareDistance;
+							return Constants.CellCost;
 
 						if (territory != null)
 						{
 							// Another harvester has claimed this resource:
 							ResourceClaim claim;
 							if (territory.IsClaimedByAnyoneElse(self, loc, out claim))
-								return Constants.SquareDistance;
+								return Constants.CellCost;
 						}
 
 						return 0;

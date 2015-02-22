@@ -8,7 +8,7 @@
  */
 #endregion
 
-namespace OpenRA.Mods.Common.Traits
+namespace OpenRA.Mods.Common.Pathfinder
 {
 	public static class Constants
 	{
@@ -23,6 +23,13 @@ namespace OpenRA.Mods.Common.Traits
 		/// (125 according to runtime tests where we could assess the cost
 		/// a unit took to move one cell horizontally)
 		/// </summary>
-		public const int SquareDistance = 125;
+		public const int CellCost = 125;
+
+		/// <summary>
+		/// Min cost to arrive from once cell to a diagonal adjacent one
+		/// (125 * Sqrt(2) according to runtime tests where we could assess the cost
+		/// a unit took to move one cell diagonally)
+		/// </summary>
+		public const int DiagonalCellCost = 177;
 	}
 }

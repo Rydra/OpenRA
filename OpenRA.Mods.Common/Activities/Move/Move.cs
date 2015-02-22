@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using OpenRA.Activities;
+using OpenRA.Mods.Common.Pathfinder;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Primitives;
 using OpenRA.Traits;
@@ -210,7 +211,7 @@ namespace OpenRA.Mods.Common.Activities
 			var nextCell = path[path.Count - 1];
 
 			// Next cell in the move is blocked by another actor
-			if (!mobile.CanMoveFreely(nextCell, ignoredActor, true))
+			if (!mobile.CanMoveFreelyInto(nextCell, ignoredActor, true))
 			{
 				// Are we close enough?
 				var cellRange = nearEnough.Range / 1024;

@@ -10,8 +10,9 @@
 
 using System;
 using System.Collections.Generic;
+using OpenRA.Mods.Common.Traits;
 
-namespace OpenRA.Mods.Common.Traits
+namespace OpenRA.Mods.Common.Pathfinder
 {
 	/// <summary>
 	/// Represents a graph with nodes and edges
@@ -77,11 +78,11 @@ namespace OpenRA.Mods.Common.Traits
 		public PathGraph(CellLayer<CellInfo> cellInfo, IMobileInfo mobileInfo, IActor actor, IWorld world, bool checkForBlocked)
 		{
 			this.cellInfo = cellInfo;
-			this.World = world;
+			World = world;
 			this.mobileInfo = mobileInfo;
-			this.Actor = actor;
-			this.LaneBias = 1;
-			this.checkConditions = checkForBlocked ? CellConditions.TransientActors : CellConditions.None;
+			Actor = actor;
+			LaneBias = 1;
+			checkConditions = checkForBlocked ? CellConditions.TransientActors : CellConditions.None;
 		}
 
 		// Sets of neighbors for each incoming direction. These exclude the neighbors which are guaranteed
@@ -103,7 +104,7 @@ namespace OpenRA.Mods.Common.Traits
 
 		public ICollection<GraphConnection> GetConnections(CPos position)
 		{
-			var previousPos = this.cellInfo[position].PreviousPos;
+			var previousPos = cellInfo[position].PreviousPos;
 
 			var dx = position.X - previousPos.X;
 			var dy = position.Y - previousPos.Y;
@@ -111,7 +112,7 @@ namespace OpenRA.Mods.Common.Traits
 
 			var validNeighbors = new LinkedList<GraphConnection>();
 			var directions = DirectedNeighbors[index];
-			for (int i = 0; i < directions.Length; i++)
+			for (var i = 0; i < directions.Length; i++)
 			{
 				var neighbor = position + directions[i];
 				var movementCost = GetCostToNode(neighbor, directions[i]);
@@ -125,13 +126,13 @@ namespace OpenRA.Mods.Common.Traits
 		int GetCostToNode(CPos destNode, CVec direction)
 		{
 			int movementCost;
-			if (this.mobileInfo.CanEnterCell(
-				this.World as World,
-				this.Actor as Actor,
+			if (mobileInfo.CanEnterCell(
+				World as World,
+				Actor as Actor,
 				destNode,
 				out movementCost,
-				this.IgnoredActor as Actor,
-				checkConditions) && !(this.CustomBlock != null && this.CustomBlock(destNode)))
+				IgnoredActor as Actor,
+				checkConditions) && !(CustomBlock != null && CustomBlock(destNode)))
 			{
 				return CalculateCellCost(destNode, direction, movementCost);
 			}
@@ -144,7 +145,7 @@ namespace OpenRA.Mods.Common.Traits
 			var cellCost = movementCost;
 
 			if (direction.X * direction.Y != 0)
-				cellCost = (int)(cellCost * Constants.Sqrt2);
+				cellCost = (cellCost * 34) / 24;
 
 			if (CustomCost != null)
 				cellCost += CustomCost(neighborCPos);
@@ -173,8 +174,8 @@ namespace OpenRA.Mods.Common.Traits
 
 			disposed = true;
 
-			CellInfoLayerManager.Instance.PutBackIntoPool(this.cellInfo);
-			this.cellInfo = null;
+			CellInfoLayerManager.Instance.PutBackIntoPool(cellInfo);
+			cellInfo = null;
 
 			GC.SuppressFinalize(this);
 		}
@@ -185,12 +186,12 @@ namespace OpenRA.Mods.Common.Traits
 		{
 			get
 			{
-				return this.cellInfo[pos];
+				return cellInfo[pos];
 			}
 
 			set
 			{
-				this.cellInfo[pos] = value;
+				cellInfo[pos] = value;
 			}
 		}
 	}

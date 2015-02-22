@@ -11,7 +11,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OpenRA.Mods.Common.Traits
+namespace OpenRA.Mods.Common.Pathfinder
 {
 	public class PathCacheStorage : ICacheStorage<List<CPos>>
 	{

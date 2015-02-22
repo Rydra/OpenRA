@@ -9,10 +9,11 @@
 #endregion
 
 using System.Collections.Generic;
+using OpenRA.Mods.Common.Traits;
 using OpenRA.Support;
 using OpenRA.Traits;
 
-namespace OpenRA.Mods.Common.Traits
+namespace OpenRA.Mods.Common.Pathfinder
 {
 	/// <summary>
 	/// A decorator used to cache the pathfinder (Decorator design pattern)

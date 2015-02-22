@@ -8,15 +8,13 @@
  */
 #endregion
 
-using System;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Linq;
+using OpenRA.Mods.Common.Traits;
 using OpenRA.Primitives;
 
-namespace OpenRA.Mods.Common.Traits
+namespace OpenRA.Mods.Common.Pathfinder
 {
-	using System.Linq;
-
 	public sealed class PathSearch : BasePathSearch
 	{
 		public override IEnumerable<Pair<CPos, int>> Considered
@@ -37,9 +35,7 @@ namespace OpenRA.Mods.Common.Traits
 		public static IPathSearch Search(IWorld world, IMobileInfo mi, IActor self, bool checkForBlocked)
 		{
 			var graph = new PathGraph(CellInfoLayerManager.Instance.NewLayer(world.Map), mi, self, world, checkForBlocked);
-			var search = new PathSearch(graph);
-
-			return search;
+			return new PathSearch(graph);
 		}
 
 		public static IPathSearch FromPoint(IWorld world, IMobileInfo mi, IActor self, CPos from, CPos target, bool checkForBlocked)

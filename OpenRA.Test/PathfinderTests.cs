@@ -16,6 +16,7 @@ using System.Linq;
 using Moq;
 using NUnit.Framework;
 using OpenRA;
+using OpenRA.Mods.Common.Pathfinder;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Test;
 
@@ -30,7 +31,7 @@ namespace PathfinderTests
 		IMap map;
 		IActor actor;
 
-		[TestFixtureSetUp]
+		[SetUp]
 		public void Setup()
 		{
 			map = new FakeMap(Width, Height);
@@ -179,6 +180,32 @@ namespace PathfinderTests
 		public void EstimatorsTest()
 		{
 			Assert.AreEqual(Est1(new CPos(0, 0), new CPos(20, 30)), Est2(new CPos(0, 0), new CPos(20, 30)));
+		}
+
+		[Test]
+		public void Remove1000StoredPaths()
+		{
+			var world = new Mock<IWorld>();
+			world.SetupGet(m => m.WorldTick).Returns(50);
+			var pathCacheStorage = new PathCacheStorage(world.Object);
+			var stopwatch = new Stopwatch();
+			for (var i = 0; i < 1100; i++)
+			{
+				if (i == 1000)
+				{
+					// Let's make the world tick further so we can trigger the removals
+					// when storing more stuff
+					world.SetupGet(m => m.WorldTick).Returns(110);
+					stopwatch.Start();
+				}
+
+				pathCacheStorage.Store(i.ToString(), new List<CPos>());
+				if (i == 1000)
+				{
+					stopwatch.Stop();
+					Console.WriteLine("I took " + stopwatch.ElapsedMilliseconds + " ms to remove 1000 stored paths");
+				}
+			}
 		}
 
 		/// <summary>

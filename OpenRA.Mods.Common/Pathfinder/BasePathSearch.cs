@@ -11,9 +11,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using OpenRA.Mods.Common.Traits;
 using OpenRA.Primitives;
 
-namespace OpenRA.Mods.Common.Traits
+namespace OpenRA.Mods.Common.Pathfinder
 {
 	public interface IPathSearch
 	{
@@ -141,10 +142,10 @@ namespace OpenRA.Mods.Common.Traits
 
 				// According to the information link, this is the shape of the function.
 				// We just extract factors to simplify.
-				// var h = D * straight + (D * Constants.Sqrt2 - 2 * D) * diag;
-				var h = Constants.SquareDistance * (straight + (Constants.Sqrt2 - 2) * diag);
+				// Possible simplification: var h = Constants.CellCost * (straight + (Constants.Sqrt2 - 2) * diag);
+				var estimate = Constants.CellCost * straight + (Constants.DiagonalCellCost - 2 * Constants.CellCost) * diag;
 
-				return (int)h;
+				return estimate;
 			};
 		}
 

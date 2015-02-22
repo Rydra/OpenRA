@@ -90,7 +90,7 @@ namespace OpenRA.Test
 
 		public int WorldTick
 		{
-			get { throw new NotImplementedException("No need to implement this yet"); }
+			get { return 50; }
 		}
 
 		public IMap Map
@@ -147,6 +147,11 @@ namespace OpenRA.Test
 		public bool CanEnterCell(World world, Actor self, CPos cell, Actor ignoreActor = null, CellConditions check = CellConditions.All)
 		{
 			return conditions(cell);
+		}
+
+		public object Create(ActorInitializer init)
+		{
+			throw new NotImplementedException();
 		}
 	}
 

@@ -14,6 +14,7 @@ using System.Linq;
 using OpenRA.Activities;
 using OpenRA.Mods.Common.Activities;
 using OpenRA.Mods.Common.Orders;
+using OpenRA.Mods.Common.Pathfinder;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Common.Traits
@@ -381,18 +382,18 @@ namespace OpenRA.Mods.Common.Traits
 						// Get the resource at this location:
 						var resType = resLayer.GetResource(loc);
 						if (resType == null)
-							return Constants.SquareDistance;
+							return Constants.CellCost;
 
 						// Can the harvester collect this kind of resource?
 						if (!harvInfo.Resources.Contains(resType.Info.Name))
-							return Constants.SquareDistance;
+							return Constants.CellCost;
 
 						// Another harvester has claimed this resource:
 						if (territory != null)
 						{
 							ResourceClaim claim;
 							if (territory.IsClaimedByAnyoneElse(self, loc, out claim))
-								return Constants.SquareDistance;
+								return Constants.CellCost;
 						}
 
 						return 0;

@@ -29,7 +29,7 @@ namespace OpenRA.Mods.Common.Traits
 		All = TransientActors | BlockedByMovers
 	}
 
-	public interface IMobileInfo
+	public interface IMobileInfo : IMoveInfo
 	{
 		int MovementCostForCell(World world, CPos cell);
 		bool CanEnterCell(World world, Actor self, CPos cell, out int movementCost, Actor ignoreActor = null, CellConditions check = CellConditions.All);
@@ -38,7 +38,7 @@ namespace OpenRA.Mods.Common.Traits
 	}
 
 	[Desc("Unit is able to move.")]
-	public class MobileInfo : ITraitInfo, IOccupySpaceInfo, IFacingInfo, IMoveInfo, UsesInit<FacingInit>, UsesInit<LocationInit>, UsesInit<SubCellInit>, IMobileInfo
+	public class MobileInfo : IMobileInfo, IOccupySpaceInfo, IFacingInfo, UsesInit<FacingInit>, UsesInit<LocationInit>, UsesInit<SubCellInit>
 	{
 		[FieldLoader.LoadUsing("LoadSpeeds")]
 		[Desc("Set Water: 0 for ground units and lower the value on rough terrain.")]
@@ -564,7 +564,7 @@ namespace OpenRA.Mods.Common.Traits
 			return Info.CanEnterCell(self.World, self, cell, ignoreActor, checkTransientActors ? CellConditions.All : CellConditions.BlockedByMovers);
 		}
 
-		public bool CanMoveFreely(CPos cell, Actor ignoreActor = null, bool checkTransientActors = true)
+		public bool CanMoveFreelyInto(CPos cell, Actor ignoreActor = null, bool checkTransientActors = true)
 		{
 			return Info.CanMoveFreelyInto(self.World, self, cell, ignoreActor, checkTransientActors ? CellConditions.All : CellConditions.BlockedByMovers);
 		}

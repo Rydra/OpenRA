@@ -1,4 +1,4 @@
-﻿#region Copyright & License Information
+#region Copyright & License Information
 /*
  * Copyright 2007-2015 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
@@ -8,14 +8,51 @@
  */
 #endregion
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+using OpenRA.Mods.Common.Pathfinder;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Common.Traits
 {
+	using System;
+	using System.Diagnostics;
+	using System.Linq;
+
+	[Desc("Calculates routes for mobile units based on the A* search algorithm.", " Attach this to the world actor.")]
+	public class PathFinderInfo : ITraitInfo
+	{
+		public object Create(ActorInitializer init)
+		{
+			return new PathFinderCacheDecorator(new PathFinder(init.World), new PathCacheStorage(init.World));
+		}
+	}
+
+	public interface IPathFinder
+	{
+		/// <summary>
+		/// Calculates a path for the actor from source to destination
+		/// </summary>
+		/// <param name="from">The start node</param>
+		/// <param name="target">the target node</param>
+		/// <param name="self">the actor</param>
+		/// <returns>A path from start to target</returns>
+		List<CPos> FindUnitPath(CPos from, CPos target, IActor self);
+
+		List<CPos> FindUnitPathToRange(CPos src, SubCell srcSub, WPos target, WRange range, IActor self);
+
+		/// <summary>
+		/// Calculates a path given a search specification
+		/// </summary>
+		List<CPos> FindPath(IPathSearch search);
+
+		/// <summary>
+		/// Calculates a path given two search specifications, and
+		/// then returns a path when both search intersect each other
+		/// TODO: This should eventually disappear
+		/// </summary>
+		List<CPos> FindBidiPath(IPathSearch fromSrc, IPathSearch fromDest);
+	}
+
 	public class PathFinder : IPathFinder
 	{
 		static readonly List<CPos> EmptyPath = new List<CPos>(0);
@@ -61,7 +98,7 @@ namespace OpenRA.Mods.Common.Traits
 			// This assumes that the SubCell does not change during the path traversal
 			var tilesInRange = world.Map.FindTilesInCircle(targetCell, range.Range / 1024 + 1)
 				.Where(t => (world.Map.CenterOfCell(t) - target).LengthSquared <= rangeSquared
-				            && mi.CanEnterCell(self.World as World, self as Actor, t));
+							&& mi.CanEnterCell(self.World as World, self as Actor, t));
 
 			// See if there is any cell within range that does not involve a cross-domain request
 			// Really, we only need to check the circle perimeter, but it's not clear that would be a performance win
@@ -234,69 +271,6 @@ namespace OpenRA.Mods.Common.Traits
 				throw new InvalidOperationException("(PathFinder) sanity check failed: doesn't go to dest");
 			if (path[path.Count - 1] != src)
 				throw new InvalidOperationException("(PathFinder) sanity check failed: doesn't come from src");
-		}
-	}
-
-	/// <summary>
-	/// Describes the three states that a node in the graph can have.
-	/// Based on A* algorithm specification
-	/// </summary>
-	public enum CellStatus
-	{
-		Unvisited,
-		Open,
-		Closed
-	}
-
-	/// <summary>
-	/// Stores information about nodes in the pathfinding graph
-	/// </summary>
-	public struct CellInfo
-	{
-		/// <summary>
-		/// The cost to move from the start up to this node
-		/// </summary>
-		public readonly int CostSoFar;
-
-		/// <summary>
-		/// The estimation of how far is the node from our goal
-		/// </summary>
-		public readonly int EstimatedTotal;
-
-		/// <summary>
-		/// The previous node of this one that follows the shortest path
-		/// </summary>
-		public readonly CPos PreviousPos;
-
-		/// <summary>
-		/// The status of this node
-		/// </summary>
-		public readonly CellStatus Status;
-
-		public CellInfo(int costSoFar, int estimatedTotal, CPos previousPos, CellStatus status)
-		{
-			CostSoFar = costSoFar;
-			PreviousPos = previousPos;
-			Status = status;
-			EstimatedTotal = estimatedTotal;
-		}
-	}
-
-	/// <summary>
-	/// Compares two nodes according to their estimations
-	/// </summary>
-	public class PositionComparer : IComparer<CPos>
-	{
-		readonly IGraph<CellInfo> graph;
-
-		public PositionComparer(IGraph<CellInfo> graph)
-		{
-			this.graph = graph;
-		}
-
-		public int Compare(CPos x, CPos y)
-		{
-			return Math.Sign(graph[x].EstimatedTotal - graph[y].EstimatedTotal);
 		}
 	}
 }

@@ -10,8 +10,9 @@
 
 using System.Collections.Generic;
 using System.Drawing;
+using OpenRA.Mods.Common.Traits;
 
-namespace OpenRA.Mods.Common.Traits
+namespace OpenRA.Mods.Common.Pathfinder
 {
 	public interface ICellInfoLayerManager
 	{
