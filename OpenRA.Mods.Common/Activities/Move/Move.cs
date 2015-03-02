@@ -20,6 +20,169 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.Common.Activities
 {
+	using System.IO;
+
+	public interface IPathCalculator
+	{
+		IEnumerable<CPos> CalculatePath();
+	}
+
+	public abstract class BasePathCalculator : IPathCalculator
+	{
+		protected readonly IPathFinder pathFinder;
+
+		protected BasePathCalculator(IPathFinder pathFinder)
+		{
+			this.pathFinder = pathFinder;
+		}
+
+		public abstract IEnumerable<CPos> CalculatePath();
+	}
+
+	public class RegularPathFinder : BasePathCalculator
+	{
+		private readonly IActor self;
+		private readonly IMobile mobile;
+		private readonly CPos destination;
+
+		public RegularPathFinder(IActor self, IMobile mobile, CPos destination)
+			: base(self.World.WorldActor.Trait<IPathFinder>())
+		{
+			this.self = self;
+			this.mobile = mobile;
+			this.destination = destination;
+		}
+
+		public override IEnumerable<CPos> CalculatePath()
+		{
+			return
+				pathFinder.FindPath(
+					PathSearch.FromPoint(self.World, mobile.Info, self, mobile.ToCell, destination, false).WithoutLaneBias());
+		} 
+	}
+
+	public class RegularPathfinderWithIgnoredActor : BasePathCalculator
+	{
+		private readonly IActor self;
+		private readonly IMobile mobile;
+		private readonly CPos destination;
+
+		private readonly IActor ignoredActor;
+
+		public RegularPathfinderWithIgnoredActor(IActor self, IMobile mobile, CPos destination, IActor ignoredActor)
+			: base(self.World.WorldActor.Trait<IPathFinder>())
+		{
+			this.self = self;
+			this.mobile = mobile;
+			this.destination = destination;
+			this.ignoredActor = ignoredActor;
+		}
+
+		public override IEnumerable<CPos> CalculatePath()
+		{
+			return
+				pathFinder.FindPath(
+					PathSearch.FromPoint(self.World, mobile.Info, self, mobile.ToCell, destination, false)
+						.WithIgnoredActor(ignoredActor));
+		}
+	}
+
+	public class FindUnitPathfinder : BasePathCalculator
+	{
+		private readonly IActor self;
+		private readonly IMobile mobile;
+		private readonly CPos destination;
+
+		public FindUnitPathfinder(IActor self, IMobile mobile, CPos destination)
+			: base(self.World.WorldActor.Trait<IPathFinder>())
+		{
+			this.self = self;
+			this.mobile = mobile;
+			this.destination = destination;
+		}
+
+		public override IEnumerable<CPos> CalculatePath()
+		{
+			return pathFinder.FindUnitPath(mobile.ToCell, destination, self);
+		}
+	}
+
+	public class FindUnitRangefinder : BasePathCalculator
+	{
+		private readonly IActor self;
+		private readonly IMobile mobile;
+		private readonly CPos destination;
+
+		private readonly SubCell subCell;
+
+		private readonly WRange nearEnough;
+
+		public FindUnitRangefinder(IActor self, IMobile mobile, CPos destination, SubCell subCell, WRange nearEnough)
+			: base(self.World.WorldActor.Trait<IPathFinder>())
+		{
+			this.self = self;
+			this.mobile = mobile;
+			this.destination = destination;
+			this.subCell = subCell;
+			this.nearEnough = nearEnough;
+		}
+
+		public override IEnumerable<CPos> CalculatePath()
+		{
+			return pathFinder.FindUnitPathToRange(mobile.FromCell, subCell, self.World.Map.CenterOfSubCell(destination, subCell), nearEnough, self);
+		}
+	}
+
+	public class SpecialCalculatePathToTarget : BasePathCalculator
+	{
+		private readonly IActor self;
+
+		private readonly ITarget target;
+
+		private readonly IMobile mobile;
+
+		private readonly CPos targetPosition;
+
+		private readonly DomainIndex domainIndex;
+
+		private uint movementClass;
+
+		public SpecialCalculatePathToTarget(IActor self, ITarget target, IMobile mobile, CPos targetPosition, DomainIndex domainIndex)
+			: base(self.World.WorldActor.Trait<IPathFinder>())
+		{
+			this.self = self;
+			this.target = target;
+			this.mobile = mobile;
+			this.targetPosition = targetPosition;
+			this.domainIndex = domainIndex;
+			movementClass = (uint)mobile.Info.GetMovementClass(self.World.TileSet);
+		}
+
+		protected virtual IEnumerable<CPos> CandidateMovementCells(IActor self)
+		{
+			return Util.AdjacentCells(self.World, target);
+		}
+
+		public override IEnumerable<CPos> CalculatePath()
+		{
+			var targetCells = CandidateMovementCells(self);
+			var searchCells = new List<CPos>();
+			var loc = self.Location;
+
+			foreach (var cell in targetCells)
+				if (domainIndex.IsPassable(loc, cell, movementClass) && mobile.CanEnterCell(cell))
+					searchCells.Add(cell);
+
+			if (!searchCells.Any())
+				return new List<CPos>();
+
+			var fromSrc = PathSearch.FromPoints(self.World, mobile.Info, self, searchCells, loc, true);
+			var fromDest = PathSearch.FromPoint(self.World, mobile.Info, self, loc, targetPosition, true).Reverse();
+
+			return pathFinder.FindBidiPath(fromSrc, fromDest);
+		}
+	}
+
 	public class Move : Activity
 	{
 		static readonly List<CPos> NoPath = new List<CPos>();
@@ -27,7 +190,7 @@ namespace OpenRA.Mods.Common.Activities
 		readonly IMobile mobile;
 		readonly IEnumerable<IDisableMove> moveDisablers;
 		readonly WRange nearEnough;
-		readonly Func<List<CPos>> getPath;
+		readonly IPathCalculator pathCalculator;
 		readonly IActor ignoredActor;
 
 		List<CPos> path;
@@ -47,10 +210,7 @@ namespace OpenRA.Mods.Common.Activities
 			mobile = self.Trait<IMobile>();
 			moveDisablers = self.TraitsImplementing<IDisableMove>();
 
-			getPath = () =>
-				self.World.WorldActor.Trait<IPathFinder>().FindPath(
-					PathSearch.FromPoint(self.World, mobile.Info, self, mobile.ToCell, destination, false)
-					.WithoutLaneBias());
+			this.pathCalculator = new RegularPathFinder(self, mobile, destination);
 			this.destination = destination;
 			this.nearEnough = WRange.Zero;
 		}
@@ -64,8 +224,7 @@ namespace OpenRA.Mods.Common.Activities
 			mobile = self.Trait<IMobile>();
 			moveDisablers = self.TraitsImplementing<IDisableMove>();
 
-			getPath = () => self.World.WorldActor.Trait<IPathFinder>()
-				.FindUnitPath(mobile.ToCell, destination, self);
+			this.pathCalculator = new FindUnitPathfinder(self, mobile, destination);
 			this.destination = destination;
 			this.nearEnough = nearEnough;
 		}
@@ -76,8 +235,7 @@ namespace OpenRA.Mods.Common.Activities
 			mobile = self.Trait<IMobile>();
 			moveDisablers = self.TraitsImplementing<IDisableMove>();
 
-			getPath = () => self.World.WorldActor.Trait<IPathFinder>()
-				.FindUnitPathToRange(mobile.FromCell, subCell, self.World.Map.CenterOfSubCell(destination, subCell), nearEnough, self);
+			this.pathCalculator = new FindUnitRangefinder(self, mobile, destination, subCell, nearEnough);
 			this.destination = destination;
 			this.nearEnough = nearEnough;
 		}
@@ -87,41 +245,19 @@ namespace OpenRA.Mods.Common.Activities
 			mobile = self.Trait<IMobile>();
 			moveDisablers = self.TraitsImplementing<IDisableMove>();
 
-			getPath = () =>
-				self.World.WorldActor.Trait<IPathFinder>().FindPath(
-					PathSearch.FromPoint(self.World, mobile.Info, self, mobile.ToCell, destination, false)
-					.WithIgnoredActor(ignoredActor));
+			this.pathCalculator = new RegularPathfinderWithIgnoredActor(self, mobile, destination, ignoredActor);
 
 			this.destination = destination;
 			this.nearEnough = WRange.Zero;
 			this.ignoredActor = ignoredActor;
 		}
 
-		// This constructor is not being used...
-		public Move(IActor self, ITarget target, WRange range)
+		public Move(IActor self, IPathCalculator pathCalculator)
 		{
 			mobile = self.Trait<IMobile>();
 			moveDisablers = self.TraitsImplementing<IDisableMove>();
 
-			getPath = () =>
-			{
-				if (!target.IsValidFor(self))
-					return NoPath;
-
-				return self.World.WorldActor.Trait<IPathFinder>().FindUnitPathToRange(
-					mobile.ToCell, mobile.ToSubCell, target.CenterPosition, range, self);
-			};
-
-			destination = null;
-			nearEnough = range;
-		}
-
-		public Move(IActor self, Func<List<CPos>> getPath)
-		{
-			mobile = self.Trait<IMobile>();
-			moveDisablers = self.TraitsImplementing<IDisableMove>();
-
-			this.getPath = getPath;
+			this.pathCalculator = pathCalculator;
 
 			destination = null;
 			nearEnough = WRange.Zero;
@@ -144,7 +280,7 @@ namespace OpenRA.Mods.Common.Activities
 		// actor location is more explicit and clearer in this context
 		List<CPos> CalculatePath(IActor actor)
 		{
-			var path = getPath().TakeWhile(a => a != actor.Location).ToList();
+			var path = this.pathCalculator.CalculatePath().TakeWhile(a => a != actor.Location).ToList();
 			mobile.PathHash = HashList(path);
 			return path;
 		}

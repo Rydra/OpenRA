@@ -75,7 +75,7 @@ namespace OpenRA.Mods.Common.Activities
 					return NextActivity;
 
 				// Target has moved, and MoveAdjacentTo is still valid.
-				inner = mobile.MoveTo(() => CalculatePathToTarget(self));
+				inner = mobile.MoveTo(new SpecialCalculatePathToTarget(self, Target, mobile, targetPosition, domainIndex));
 				repath = false;
 			}
 
@@ -105,25 +105,6 @@ namespace OpenRA.Mods.Common.Activities
 			inner = Util.RunActivity(self, inner);
 
 			return this;
-		}
-
-		List<CPos> CalculatePathToTarget(IActor self)
-		{
-			var targetCells = CandidateMovementCells(self);
-			var searchCells = new List<CPos>();
-			var loc = self.Location;
-
-			foreach (var cell in targetCells)
-				if (domainIndex.IsPassable(loc, cell, movementClass) && mobile.CanEnterCell(cell))
-					searchCells.Add(cell);
-
-			if (!searchCells.Any())
-				return NoPath;
-
-			var fromSrc = PathSearch.FromPoints(self.World, mobile.Info, self, searchCells, loc, true);
-			var fromDest = PathSearch.FromPoint(self.World, mobile.Info, self, loc, targetPosition, true).Reverse();
-
-			return pathFinder.FindBidiPath(fromSrc, fromDest);
 		}
 
 		public override IEnumerable<Target> GetTargets(Actor self)

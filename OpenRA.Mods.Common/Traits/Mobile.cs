@@ -467,7 +467,7 @@ namespace OpenRA.Mods.Common.Traits
 		void SetPosition(IActor self, CPos cell, SubCell subCell = SubCell.Any);
 		void SetVisualPosition(IActor self, WPos pos);
 
-		Activity MoveTo(Func<List<CPos>> pathFunc);
+		Activity MoveTo(IPathCalculator pathCalculator);
 		bool CanEnterCell(CPos cell, IActor ignoreActor = null, bool checkTransientActors = true);
 	}
 
@@ -919,7 +919,7 @@ namespace OpenRA.Mods.Common.Traits
 		public Activity MoveWithinRange(Target target, WRange range) { return new MoveWithinRange(self, target, WRange.Zero, range); }
 		public Activity MoveWithinRange(Target target, WRange minRange, WRange maxRange) { return new MoveWithinRange(self, target, minRange, maxRange); }
 		public Activity MoveFollow(IActor self, Target target, WRange minRange, WRange maxRange) { return new Follow(self as Actor, target, minRange, maxRange); }
-		public Activity MoveTo(Func<List<CPos>> pathFunc) { return new Move(self, pathFunc); }
+		public Activity MoveTo(IPathCalculator pathCalculator) { return new Move(self, pathCalculator); }
 
 		public void OnNotifyBlockingMove(IActor self, IActor blocking)
 		{
